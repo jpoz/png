@@ -318,7 +318,7 @@ class PNG
       return '  ' if a == 0x00
       brightness = (((r + g + b) / 3) * a) / 0xFF
 
-      %w(.. ,, ++ 00)[brightness / 64]
+      %w(.. ,, ++ cc bb ^^ 00 &&)[brightness / 32]
     end
 
     def to_s # :nodoc:

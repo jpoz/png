@@ -1,7 +1,22 @@
-require 'png'
+require '../lib/png'
 require 'enumerator'
 
 class PNG
+  
+  # Color Types:
+  GRAY    = 0 # DEPTH = 1,2,4,8,16
+  RGB     = 2 # DEPTH = 8,16
+  INDEXED = 3 # DEPTH = 1,2,4,8
+  GRAYA   = 4 # DEPTH = 8,16
+  RGBA    = 6 # DEPTH = 8,16
+
+  # Filter Types:
+  NONE    = 0
+  SUB     = 1
+  UP      = 2
+  AVG     = 3
+  PAETH   = 4
+  
   def self.load_file path, metadata_only = false
     self.load File.read(path), metadata_only
   end
@@ -12,18 +27,28 @@ class PNG
     raise ArgumentError, 'Invalid PNG signature' unless signature == SIGNATURE
 
     ihdr = read_chunk 'IHDR', png
-
+    
     bit_depth, color_type, width, height = read_IHDR ihdr, metadata_only
 
     return [width, height, bit_depth] if metadata_only
-
     canvas = PNG::Canvas.new width, height
-
-    type = png.slice(4, 4).unpack('a4').first
-    read_chunk type, png if type == 'iCCP' # Ignore color profile
-
-    read_IDAT read_chunk('IDAT', png), bit_depth, color_type, canvas
+    idat = nil
+    while(1) do
+      type = png.slice(4, 4).unpack('a4').first
+      puts type
+      case type
+        when 'iCCP' then
+          read_chunk type, png
+        when 'IDAT' then
+          idat ? idat << read_chunk('IDAT', png) : idat = read_chunk('IDAT', png)
+        when 'IEND' then
+          break
+        else
+          read_chunk type, png
+        end
+    end
     read_chunk 'IEND', png
+    read_IDAT idat, bit_depth, color_type, canvas
 
     canvas
   end

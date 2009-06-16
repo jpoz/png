@@ -559,6 +559,14 @@ class PNG
       end
       point(x1, y1, color)
     end
+    
+    def rect(x, y, w, h, color)
+      Range.new(*[x, x+w]).each do |xi|
+        Range.new(*[y,y+h]).each do |yi|
+          point(xi, yi, color)
+        end
+      end
+    end
 
     ##
     # Returns an ASCII representation of this image
